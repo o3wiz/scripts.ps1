@@ -6,20 +6,6 @@ param(
     [string[]] $IncludeFileExtensions = @()
 )
 
-# ----------------------------
-#      PARAMETER VALIDATION
-# ----------------------------
-
-# Validate mutually exclusive directory filters
-if ($ExcludeDirs.Count -gt 0 -and $IncludeDirs.Count -gt 0) {
-    throw "Invalid parameters: You cannot use both -ExcludeDirs and -IncludeDirs together."
-}
-
-# Validate mutually exclusive file extension filters
-if ($ExcludeFileExtensions.Count -gt 0 -and $IncludeFileExtensions.Count -gt 0) {
-    throw "Invalid parameters: You cannot use both -ExcludeFileExtensions and -IncludeFileExtensions together."
-}
-
 # Normalize extensions (convert to lower-case and enforce dot prefix)
 function Normalize-Extensions([string[]] $exts) {
     return $exts | ForEach-Object {
@@ -57,8 +43,12 @@ function Process-Directory([string] $PPath) {
             $ext = $item.Extension.ToLower()
 
             # File extension filtering
-            if ($ExcludeFileExtensions -contains $ext) { continue }
-            if ($IncludeFileExtensions.Count -gt 0 -and $IncludeFileExtensions -notcontains $ext) { continue }
+            if ($ExcludeFileExtensions -contains $ext) {
+                continue
+            }
+            if ($IncludeFileExtensions.Count -gt 0 -and $IncludeFileExtensions -notcontains $ext) {
+                continue
+            }
 
             Write-Output "FILE: $($item.FullName)"
             Write-Output (Get-Content -LiteralPath $item.FullName -Raw)
