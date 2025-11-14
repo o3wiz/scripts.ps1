@@ -35,10 +35,6 @@ $IncludeFileExtensions = Normalize-Extensions $IncludeFileExtensions
 #       HELPER FUNCTIONS
 # ----------------------------
 
-function Write-Separator {
-    Write-Output ("-" * 80)
-}
-
 function Process-Directory([string] $PPath) {
     $FullPath = (Resolve-Path $PPath).Path
     $DirName = Split-Path $FullPath -Leaf
@@ -66,7 +62,6 @@ function Process-Directory([string] $PPath) {
 
             Write-Output "FILE: $($item.FullName)"
             Write-Output (Get-Content -LiteralPath $item.FullName -Raw)
-            Write-Separator
         }
     }
 }
