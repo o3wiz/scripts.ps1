@@ -1,10 +1,17 @@
 param(
     [string] $Path = $PWD.Path,
     [string[]] $ExcludeDirs = @(),
-    [string[]] $IncludeDirs = @(),
     [string[]] $ExcludeFileExtensions = @(),
     [string[]] $IncludeFileExtensions = @()
 )
+
+# Input validation
+if (!(Test-Path -Path $Path -PathType Container)) {
+    throw "Path must be a directory"
+}
+if (($IncludeFileExtensions.Count -gt 0) -and ($ExcludeFileExtensions.Count -gt 0)) {
+    throw "Cannot specify both IncludeFileExtensions and ExcludeFileExtensions."
+}
 
 # Normalize extensions (convert to lower-case and enforce dot prefix)
 function Normalize-Extensions([string[]] $exts) {
@@ -13,13 +20,8 @@ function Normalize-Extensions([string[]] $exts) {
         if (-not $_.StartsWith(".")) { ".$_" } else { $_ }
     }
 }
-
 $ExcludeFileExtensions = Normalize-Extensions $ExcludeFileExtensions
 $IncludeFileExtensions = Normalize-Extensions $IncludeFileExtensions
-
-# ----------------------------
-#       HELPER FUNCTIONS
-# ----------------------------
 
 function Process-Directory([string] $PPath) {
     $FullPath = (Resolve-Path $PPath).Path
@@ -29,24 +31,21 @@ function Process-Directory([string] $PPath) {
     if ($ExcludeDirs -contains $DirName) {
         return
     }
-    if ($IncludeDirs.Count -gt 0 -and $IncludeDirs -notcontains $DirName) {
-        return
-    }
 
-    $Items = Get-ChildItem -LiteralPath $FullPath -Force
+    $folderItems = Get-ChildItem -LiteralPath $FullPath -Force
 
-    foreach ($item in $Items) {
-        if ($item.PSIsContainer) {
+    foreach ($item in $folderItems) {
+        if (Test-Path -Path $item -PathType Container) {
             Process-Directory $item.FullName
         }
         else {
-            $ext = $item.Extension.ToLower()
+            $fileExt = $item.Extension.ToLower()
 
             # File extension filtering
-            if ($ExcludeFileExtensions -contains $ext) {
+            if ($ExcludeFileExtensions -contains $fileExt) {
                 continue
             }
-            if ($IncludeFileExtensions.Count -gt 0 -and $IncludeFileExtensions -notcontains $ext) {
+            if ($IncludeFileExtensions.Count -gt 0 -and $IncludeFileExtensions -notcontains $fileExt) {
                 continue
             }
 
@@ -56,7 +55,4 @@ function Process-Directory([string] $PPath) {
     }
 }
 
-# ----------------------------
-#         EXECUTION
-# ----------------------------
 Process-Directory $Path
